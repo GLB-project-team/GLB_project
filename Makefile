@@ -24,7 +24,8 @@ powerun:
 	docker run --rm -d --name $(CONTAINER_NAME) -p $(HOST_PORT):$(CONTAINER_PORT) -v ${PROJECT_PATH}:/app -e FLASK_ENV=development $(IMAGE_NAME)
 
 rrun:
-	docker run -d -p 127.0.0.1:$(HOST_PORT):$(CONTAINER_PORT)/tcp --name $(CONTAINER_NAME) $(IMAGE_NAME)
+	docker run -d -p $(HOST_PORT):$(CONTAINER_PORT)/tcp --name $(CONTAINER_NAME) $(IMAGE_NAME)
+# -v ${PROJECT_PATH}:/app
 
 # 로그 보기
 logs:
