@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
 
 # 필요한 패키지 설치
 RUN apt-get update && apt-get install -y \
@@ -27,7 +27,6 @@ RUN CHROME_DRIVER_VERSION=114.0.5735.90 && \
     rm /tmp/chromedriver_linux64.zip && \
     mv /tmp/chromedriver /usr/local/bin/chromedriver && \
     chmod 0755 /usr/local/bin/chromedriver
-
 
 WORKDIR /app
 

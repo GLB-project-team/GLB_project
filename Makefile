@@ -4,7 +4,7 @@
 IMAGE_NAME = my-flask-app
 CONTAINER_NAME = flask-container
 # PATH 자신의 경로대로 바꿀 것!
-PROJECT_PATH=C:/Users/zero/Desktop/GLB-team
+PROJECT_PATH=C:/Users/zero/GLB-project
 HOST_PORT = 5000
 CONTAINER_PORT = 5000
 DOCKER_DATA_DIR	= ./vectorDB
@@ -23,6 +23,9 @@ run:
 powerun:
 	docker run --rm -d --name $(CONTAINER_NAME) -p $(HOST_PORT):$(CONTAINER_PORT) -v ${PROJECT_PATH}:/app -e FLASK_ENV=development $(IMAGE_NAME)
 
+rrun:
+	docker run -d -p 127.0.0.1:$(HOST_PORT):$(CONTAINER_PORT)/tcp --name $(CONTAINER_NAME) $(IMAGE_NAME)
+
 # 로그 보기
 logs:
 	docker logs -f $(CONTAINER_NAME)
@@ -35,7 +38,7 @@ ps:
 	docker ps -a
 
 acs:
-	docker exec -it my-flask-app /bin/sh
+	docker exec -it $(CONTAINER_NAME) /bin/sh
 
 # 컨테이너 재시작
 restart: stop run
