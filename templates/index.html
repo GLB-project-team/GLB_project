@@ -1,0 +1,37 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Bot</title>
+</head>
+<body>
+    <h1>Book Bot</h1>
+    <form id="question-form">
+        <label for="question">당신이 원하는 책은?: </label>
+        <input type="text" id="question" name="question" required>
+        <button type="submit">질문하기</button>
+    </form>
+    <div id="response"></div>
+
+    <script>
+        document.getElementById('question-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const question = document.getElementById('question').value;
+            const responseDiv = document.getElementById('response');
+
+            const response = await fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ question: question })
+            });
+
+            const data = await response.json();
+            responseDiv.innerHTML = `<p>${data.response}</p>`;
+        });
+    </script>
+</body>
+</html>
