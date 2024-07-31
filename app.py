@@ -178,7 +178,7 @@ for doc in documents:
         )
         all_splits.append(split_doc)
 
-os.environ["OPENAI_API_KEY"] = openai_key
+# os.environ["OPENAI_API_KEY"] = openai_key
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 vectorstore = Chroma.from_documents(
