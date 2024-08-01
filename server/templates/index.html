@@ -138,11 +138,17 @@
             event.preventDefault();
             const messageInput = document.getElementById('message-input');
             const messagesDiv = document.getElementById('messages');
-            
+    
+            // 입력 시 예시 텍스트를 삭제
+            const exampleText = document.querySelector('.example-text');
+            if (exampleText) {
+                exampleText.remove();
+            }
+    
             const userMessage = messageInput.value;
             messagesDiv.innerHTML += `<div class="message user">You: ${userMessage}</div>`;
             messageInput.value = '';
-            
+    
             const response = await fetch('/ask', {
                 method: 'POST',
                 headers: {
@@ -150,16 +156,17 @@
                 },
                 body: JSON.stringify({ question: userMessage })
             });
-            
+    
             const data = await response.json();
             messagesDiv.innerHTML += `<div class="message bot">AI: ${data.response}</div>`;
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         });
-
+    
         document.querySelector('.reset').addEventListener('click', function() {
             document.getElementById('messages').innerHTML = '<div class="example-text">원하시는 분야, 현재 감정 상태 등을 물어책보살에게 말해보세요!!!<br>ex) 자존감이 많이 떨어져 있어. 자존감을 채울 수 있는 책을 추천해줘.</div>';
             document.getElementById('message-input').value = '';
         });
     </script>
+    
 </body>
 </html>
