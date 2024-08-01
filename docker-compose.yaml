@@ -20,6 +20,7 @@ services:
       - ./chromadb:/chroma/chroma
     environment:
       - IS_PERSISTENT=TRUE
+      - ALLOW_RESET=TRUE
       - PERSIST_DIRECTORY=/chroma/chroma # this is the default path, change it as needed
       - ANONYMIZED_TELEMETRY=${ANONYMIZED_TELEMETRY:-TRUE}
     ports:
