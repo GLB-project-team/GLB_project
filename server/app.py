@@ -216,11 +216,66 @@ def ask():
     user_question = request.form['question']
     if user_question.lower() in ['exit', 'quit', 'q']:
         return jsonify({'response': 'Goodbye!'})
-    result = get_chat_response(user_question)
+    from src.chroma_manager import chroma_init
+    collection_name = "chroma_book"
+    client = chroma_init(collection_name)
+    result = get_chat_response(user_question, client, collection_name)
+    # vector_db = Chroma(
+    # client=client,
+    # collection_name="chroma_docker",
+    # embedding_function=stf_embeddings,
+    # )
+    # query = "What is Word2Vec?"
+    # docs = vector_db.similarity_search(query)
+    # print(docs[0].page_content)
+
     return jsonify({'response': result})
 
-def get_chat_response(question):
-    response = qa_chain({"query": question})
+def get_chat_response(question, client, collection_name):
+    from src.chroma_manager import chroma_search
+    similar_docs = chroma_search(client, collection_name, question)
+    context = "\n".join([doc.page_content for doc in similar_docs])
+
+    # prompt = ChatPromptTemplate(
+    #     input_variables=['context', 'question'],
+    #     messages=[HumanMessagePromptTemplate(prompt=PromptTemplate(
+    #         input_variables=['context', 'question'],
+    #         template=
+    #         '''You are an assistant for question-answering tasks.
+    #         Use the following pieces of retrieved context to answer the question.
+    #         If you don't know the answer, just say that you don't know.
+    #         Use three sentences maximum and keep the answer concise.
+    #         \nQuestion: {question}
+    #         \nContext: {context}
+    #         \nAnswer:'''
+    # ))])
+
+    # model = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+    # qa_chain = RetrievalQA.from_chain_type(
+    #     llm=model,
+    #     retriever=vectorstore.as_retriever(),
+    #     chain_type_kwargs={"prompt": prompt}
+    # )
+    # response = qa_chain({"query": question})
+    # Define the prompt template
+    prompt_template = '''
+    You are an assistant for question-answering tasks.
+    Use the following pieces of retrieved context to answer the question.
+    If you don't know the answer, just say that you don't know.
+    Use three sentences maximum and keep the answer concise.
+    \nQuestion: {question}
+    \nContext: {context}
+    \nAnswer:'''
+
+    # Format the prompt with the context and question
+    prompt = prompt_template.format(question=question, context=context)
+
+    # Initialize the OpenAI model (using LangChain)
+    model = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+
+    # Get the response from the model
+    response = model(prompt)
+
     return response["result"]
 
 if __name__ == "__main__":
