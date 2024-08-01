@@ -1,36 +1,149 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Bot</title>
+    <title>무엇이든 물어책보살</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: url('static/images/reading_image1.jpg') no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding: 50px;
+        }
+        h1 {
+            position: absolute;
+            top: 20px;
+            right: 250px;
+            font-size: 3.0em;
+            color: white;
+            text-shadow: 2px 2px 4px #000;
+        }
+        #chatbox {
+            position: absolute;
+            top: 140px; /* Adjust this value to create margin between title and chatbox */
+            right: 150px;
+            width: 600px;
+            height: 800px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #messages {
+            flex: 1;
+            width: 98%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 5px;
+            background: white;
+            overflow-y: auto;
+        }
+        .example-text {
+            text-align: center;
+            color: #aaa;
+            font-style: italic;
+        }
+        .message {
+            margin-bottom: 15px;
+            align-self: flex-start;
+        }
+        .user {
+            color: blue;
+        }
+        .bot {
+            color: green;
+        }
+        #message-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            margin: 0 10px;
+            font-size: 1.1em;
+        }
+        button.reset {
+            background-color: #dc3545;
+        }
+    </style>
 </head>
 <body>
-    <h1>Book Bot</h1>
-    <form id="question-form">
-        <label for="question">당신이 원하는 책은?: </label>
-        <input type="text" id="question" name="question" required>
-        <button type="submit">질문하기</button>
-    </form>
-    <div id="response"></div>
+    <h1>무엇이든 물어책보살</h1>
+    <div id="chatbox">
+        <div id="messages">
+            <div class="example-text">
+                원하시는 분야, 현재 감정 상태 등을 물어책보살에게 말해보세요!!!<br>
+                ex) 자존감이 많이 떨어져 있어. 자존감을 채울 수 있는 책을 추천해줘.
+            </div>
+        </div>
+        <form id="message-form">
+            <input type="text" id="message-input" placeholder="물어책보살에게 물어봐!!!" required>
+            <div class="button-group">
+                <button type="submit">Send</button>
+                <button type="button" class="reset">Reset</button>
+            </div>
+        </form>
+    </div>
 
     <script>
-        document.getElementById('question-form').addEventListener('submit', async function(event) {
+        document.getElementById('message-form').addEventListener('submit', async function(event) {
             event.preventDefault();
-            const question = document.getElementById('question').value;
-            const responseDiv = document.getElementById('response');
-
+            const messageInput = document.getElementById('message-input');
+            const messagesDiv = document.getElementById('messages');
+            
+            const userMessage = messageInput.value;
+            messagesDiv.innerHTML += `<div class="message user">You: ${userMessage}</div>`;
+            messageInput.value = '';
+            
             const response = await fetch('/ask', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ question: question })
+                body: JSON.stringify({ question: userMessage })
             });
-
+            
             const data = await response.json();
-            responseDiv.innerHTML = `<p>${data.response}</p>`;
+            messagesDiv.innerHTML += `<div class="message bot">AI: ${data.response}</div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+
+        document.querySelector('.reset').addEventListener('click', function() {
+            document.getElementById('messages').innerHTML = '<div class="example-text">원하시는 분야, 현재 감정 상태 등을 물어책보살에게 말해보세요!!!<br>ex) 자존감이 많이 떨어져 있어. 자존감을 채울 수 있는 책을 추천해줘.</div>';
+            document.getElementById('message-input').value = '';
         });
     </script>
 </body>
