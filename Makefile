@@ -1,68 +1,51 @@
-# Makefile
+IMAGE_NAME				= my-flask-app
+DOCKER_COMPOSE_YAML		= docker-compose.yaml
+DOCKER_DATA_DIR			= ./chromaDB
 
-# 변수 설정
-IMAGE_NAME = my-flask-app
-CONTAINER_NAME = flask-container
-# PATH 자신의 경로대로 바꿀 것!
-PROJECT_PATH=C:/Users/zero/GLB-project
-HOST_PORT = 5000
-CONTAINER_PORT = 5000
-DOCKER_DATA_DIR	= ./vectorDB
-
-# Docker 이미지 빌드
 build: $(DOCKER_DATA_DIR)
-	docker build -t $(IMAGE_NAME) .
+	docker-compose -f $(DOCKER_COMPOSE_YAML) build --no-cache
 
-$(DOCKER_DATA_DIR):
-	powershell -Command "New-Item -Path '$(DOCKER_DATA_DIR)/book_content' -ItemType Directory -Force"
+up:
+	docker-compose -f $(DOCKER_COMPOSE_YAML) up -d
 
-# Docker 컨테이너 실행 (볼륨 마운트 포함)
-run:
-	docker run --rm -d --name $(CONTAINER_NAME) -p $(HOST_PORT):$(CONTAINER_PORT) -v ${PWD}:/app -e FLASK_ENV=development $(IMAGE_NAME)
+$(DOCKER_DATA_DIR) :
+	powershell -Command "New-Item -Path '$(DOCKER_DATA_DIR)' -ItemType Directory -Force"
 
-powerun:
-	docker run --rm -d --name $(CONTAINER_NAME) -p $(HOST_PORT):$(CONTAINER_PORT) -v ${PROJECT_PATH}:/app -e FLASK_ENV=development $(IMAGE_NAME)
+down:
+	docker-compose -f $(DOCKER_COMPOSE_YAML) down
 
-rrun:
-	docker run -d -p $(HOST_PORT):$(CONTAINER_PORT)/tcp --name $(CONTAINER_NAME) $(IMAGE_NAME)
-# -v ${PROJECT_PATH}:/app
-
-# 로그 보기
-logs:
-	docker logs -f $(CONTAINER_NAME)
-
-# 컨테이너 중지
-stop:
-	docker stop $(CONTAINER_NAME)
+re: down build
 
 ps:
 	docker ps -a
 
-acs:
-	docker exec -it $(CONTAINER_NAME) /bin/sh
-
-# 컨테이너 재시작
-restart: stop run
-
-# 컨테이너 및 이미지 삭제 (clean)
 clean:
-	-docker stop $(CONTAINER_NAME)
-	-docker rm $(CONTAINER_NAME)
-	-docker rmi $(IMAGE_NAME)
+	docker-compose -f $(DOCKER_COMPOSE_YAML) down --volumes
+	docker system prune -a
+	docker image prune -a
 
-# 모든 Docker 리소스 정리 (fclean)
-fclean: clean
-	-docker system prune -af
+fclean:
+	docker-compose -f $(DOCKER_COMPOSE_YAML) down --volumes
+	docker system prune -a
+	rm -rf ./chromaDB
 
-# 도움말
-help:
-	@echo "Available commands:"
-	@echo "  make build    : Build Docker image"
-	@echo "  make run      : Run Docker container with volume mount"
-	@echo "  make logs     : View container logs"
-	@echo "  make stop     : Stop running container"
-	@echo "  make restart  : Restart the container"
-	@echo "  make clean    : Remove container and image"
-	@echo "  make fclean   : Remove all Docker resources"
+Acsa:
+	docker exec -it back_api-app-1 /bin/sh
 
-.PHONY: build run logs stop restart clean fclean help acs mk
+Acsc:
+	docker exec -it back_api-worker-1 /bin/sh
+
+loga:
+	docker logs back_api-app-1
+
+logc:
+	docker logs back_api-worker-1
+
+logs:
+	docker logs back_api-app-1
+	docker logs back_api-worker-1
+
+buildx:
+	docker buildx build --platform linux/amd64 --tag $(IMAGE_NAME) ./server/
+
+.PHONY: build up down re ps clean fclean Acsa Acsc loga logc logs buildx
