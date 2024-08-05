@@ -34,18 +34,26 @@ def is_url_crawled(url):
     c.execute('SELECT 1 FROM crawled_urls WHERE url_hash=?', (url_hash,))
     return c.fetchone() is not None
 
-def get_urls_in_csv(file_path='./src/crawling_urls.csv'):
-    df = pd.read_csv(file_path, header=None)
-    urls = df[0].tolist()  # 첫 번째 열만 추출
-    return urls
+def get_urls_in_csv(file_path='src/crawling_urls.csv'):
+    try:
+        df = pd.read_csv(file_path, names=['url', 'book_name'], dtype=str, header=0, quotechar='"', on_bad_lines='skip')
+        urls = df['url'].tolist()  # 첫 번째 열만 추출
+        return urls
+    except pd.errors.ParserError as e:
+        print(f"Error parsing CSV: {e}")
+        return []
 
 def crawling_manager():
     from src.chroma_manager import chroma_init, db_insert, check_url_exists
+    print('start crawling manager')
     urls = get_urls_in_csv()
+    if not urls:
+        return {"message": "No valid URLs found in CSV"}
     collection_name = 'book_collection'
 
     client = chroma_init(collection_name)
     for url in urls:
+        print(url)
         if check_url_exists(client, collection_name, url):
             print(f"Document with URL {url} already exists.")
             continue  # 중복된 경우 크롤링을 건너뜁니다.
@@ -54,6 +62,7 @@ def crawling_manager():
         document = crawl_single_page(url)
         if document:
             db_insert(client, collection_name, document)
+    return urls
 
 def crawl_single_page(url):
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)

@@ -27,7 +27,6 @@ clean:
 fclean:
 	docker-compose -f $(DOCKER_COMPOSE_YAML) down --volumes
 	docker system prune -a
-	rm -rf ./chromaDB
 
 Acsa:
 	docker exec -it back_api-app-1 /bin/sh

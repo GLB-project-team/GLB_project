@@ -1,5 +1,4 @@
 # Chroma 클라이언트 생성
-# from langchain_community.embeddings import OpenAIEmbeddings
 # from langchain.embeddings import OpenAIEmbeddings
 # from langchain_community.vectorstores import Chroma
 import os
@@ -7,49 +6,40 @@ import uuid
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
+# from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
+def get_chromadb_data(client, collection_name):
+    collection = client.get_collection(collection_name)
+    return collection.peek()
+
 def chroma_init(collection_name):
     client = chromadb.HttpClient(
         host="glb_project-chromadb-1", port=8000, settings=Settings(allow_reset=True)
     )
-    # embeddings_function = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
-    openai_ef = embedding_functions.OpenAIEmbeddingFunction(
-        api_key=OPENAI_API_KEY, 
-        model_name="text-embedding-ada-002"
-    )
-    # col = client.list_collections()
-    # if not col[collection_name]:
-    #     client.reset()  # 데이터베이스 초기화
-    #     collection = client.create_collection(collection_name, embeddings_function=openai_ef)
-    # else:
-    #     collection = client.get_collention[collection_name]
-    # collection = client.get_or_create_collention(
-    #     collection_name, 
-    #     embedding_function=openai_ef
-    # )
-    collections = client.list_collections()
-    
-    collection_names = [collection['name'] for collection in collections]
+    # collections = client.list_collections()
+    # collection_names = [collection.name for collection in collections]
 
-    if collection_name not in collection_names:
-        client.reset()  # 데이터베이스 초기화
-        collection = client.create_collection(collection_name, embeddings_function=openai_ef)
-    else:
+    try:
         collection = client.get_collection(collection_name)
+        print('get collection')
+    except:
+        # client.reset()  # 데이터베이스 초기화
+        collection = client.create_collection(collection_name)
+        print('create collection')
     return client
 
 def db_insert(client, collection_name, doc):
-    # client = chromadb.HttpClient(
-    #     host="glb_project-chromadb-1", port=8000, settings=Settings(allow_reset=True)
-    # )
+    print('start chromadb_insert')
     openai_ef = embedding_functions.OpenAIEmbeddingFunction(
         api_key=OPENAI_API_KEY, 
         model_name="text-embedding-ada-002"
     )
+
     collection = client.get_collection(name=collection_name, embedding_function=openai_ef)
 
     text_splitter = RecursiveCharacterTextSplitter(
@@ -58,6 +48,7 @@ def db_insert(client, collection_name, doc):
     )
     # docs = text_splitter.split_text(documents)
     splits = text_splitter.split_text(doc.page_content)
+    split_docs = []  # split_doc 객체를 저장할 리스트
     for i, split in enumerate(splits):
         from src.crawler import Document
         split_doc = Document(
@@ -73,17 +64,15 @@ def db_insert(client, collection_name, doc):
                 'review': doc.metadata['review']
             }
         )
-    for doc in split_doc:
+        split_docs.append(split_doc)
+
+    for split_doc in split_docs:
         uuid_val = uuid.uuid1()
-        # print("Inserted documents for ", uuid_val)
-        collection.add(ids=[str(uuid_val)], documents=doc.page_content)
+        collection.add(ids=[str(uuid_val)], documents=split_doc.page_content, metadatas=split_doc.metadata)
+        # collection.add(ids=[str(uuid_val)], documents=split_doc.page_content)
 
 def chroma_search(client, collection_name, query, k=5):
-    # embeddings_function = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
-    openai_ef = embedding_functions.OpenAIEmbeddingFunction(
-        api_key=OPENAI_API_KEY, 
-        model_name="text-embedding-ada-002"
-    )
+    openai_ef = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
 
     # tell LangChain to use our client and collection name
     search_db = Chroma(
@@ -91,12 +80,16 @@ def chroma_search(client, collection_name, query, k=5):
         collection_name=collection_name,
         embedding_function=openai_ef,
     )
-    docs = search_db.similarity_search(query, k=k)
-    # docs = search_db.similarity_search_with_score(query, k=k)
+    # docs = search_db.similarity_search(query, k=k)
+    docs = search_db.similarity_search_with_score(query)
     return docs
 
 def check_url_exists(client, collection_name, url):
-    collection = client.get_collection(name=collection_name)
+    try:
+        collection = client.get_collection(collection_name)
+    except:
+        return False
+
     # 메타데이터에서 URL 검색
     result = collection.get(where={"url": url})
     return bool(result['metadatas'])
