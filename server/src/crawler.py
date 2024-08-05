@@ -6,6 +6,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
+import pandas as pd
 import sqlite3
 import hashlib
 import uuid
@@ -33,14 +34,26 @@ def is_url_crawled(url):
     c.execute('SELECT 1 FROM crawled_urls WHERE url_hash=?', (url_hash,))
     return c.fetchone() is not None
 
-def crawling_manager(urls):
-    documents = []
+def get_urls_in_csv(file_path='./src/crawling_urls.csv'):
+    df = pd.read_csv(file_path, header=None)
+    urls = df[0].tolist()  # 첫 번째 열만 추출
+    return urls
+
+def crawling_manager():
+    from src.chroma_manager import chroma_init, db_insert, check_url_exists
+    urls = get_urls_in_csv()
+    collection_name = 'book_collection'
+
+    client = chroma_init(collection_name)
     for url in urls:
-        # URL별 크롤링 및 데이터 처리 로직
+        if check_url_exists(client, collection_name, url):
+            print(f"Document with URL {url} already exists.")
+            continue  # 중복된 경우 크롤링을 건너뜁니다.
+
+        # 중복되지 않은 경우에만 크롤링 진행
         document = crawl_single_page(url)
         if document:
-            documents.append(document)
-    return documents
+            db_insert(client, collection_name, document)
 
 def crawl_single_page(url):
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)

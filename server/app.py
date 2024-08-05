@@ -22,6 +22,10 @@ import os
 import uuid
 import time
 
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+from langchain_openai import ChatOpenAI
+
 # Flask 애플리케이션 초기화
 app = Flask(__name__)
 
@@ -232,14 +236,64 @@ def ask():
     # print(docs[0].page_content)
 
     return jsonify({'response': result})
-# Document 클래스 정의
-class Document:
-    def __init__(self, page_content, metadata):
-        self.id = str(uuid.uuid4())
-        self.page_content = page_content
-        self.metadata = metadata
+
+@app.route('/crawler/request', methods=['POST'])
+def request_craw_with_insert():
+    from src.crawler import crawl_single_page
+    from src.chroma_manager import chroma_init, db_insert, check_url_exists
+    url = 0
+    collection_name = 'book_collection'
+    client = chroma_init(collection_name)
+
+    if check_url_exists(client, collection_name, url):
+        print(f"Document with URL {url} already exists.")
+    else:
+        doc = crawl_single_page(url)
+        if doc:
+            db_insert(client, collection_name, doc)
+
+@app.route('/crawler/local', methods=['POST'])
+def request_craw_with_insert():
+    from src.crawler import crawling_manager
+    from src.chroma_manager import chroma_init, db_insert
+
+    doc = crawling_manager()
+    if doc:
+        client = chroma_init('book_db')
+        db_insert(client, 'book_db', doc)
 
 def get_chat_response(question, client, collection_name):
+    from src.chroma_manager import chroma_search
+    similar_docs = chroma_search(client, collection_name, question)
+    if similar_docs:
+        context = "\n".join([doc.page_content for doc in similar_docs])
+    else:
+        similar_docs = []
+
+    # 프롬프트 생성
+    prompt = f"""You are an assistant for question-answering tasks.
+    Use the following pieces of retrieved context to answer the question.
+    If you don't know the answer, just say that you don't know.
+    Use three sentences maximum and keep the answer concise.
+    \nQuestion: {question}
+    \nContext: {context}
+    \nAnswer:"""
+
+    # LLM
+    model = ChatOpenAI(temperature=0, model="gpt-4o")
+
+    # RAG pipeline
+    chain = (
+        RunnablePassthrough(lambda x: prompt)  # 함수를 직접 전달
+        | model
+        | StrOutputParser()
+    )
+
+    # 파이프라인 실행
+    output = chain.invoke(question)
+    return output
+
+def tmp_get_chat_response(question, client, collection_name):
     from src.chroma_manager import chroma_search
     similar_docs = chroma_search(client, collection_name, question)
     if similar_docs:
@@ -259,46 +313,69 @@ def get_chat_response(question, client, collection_name):
         #         'review': doc.metadata['review']
         #     }
         # )
-        similar_docs.append(Document(
-            page_content="split",
-            metadata={
-                'id': "{doc.id}-{i}",
-                'author': "doc.metadata['author']",
-                'title': "doc.metadata['title']",
-                'url': "doc.metadata['url']",
-                'table_of_contents': "doc.metadata['table_of_contents']",
-                'book_intro': "doc.metadata['book_intro']",
-                'publisher_review': "doc.metadata['publisher_review']",
-                'review': "doc.metadata['review']"
-            }
-        ))
+    #     similar_docs.append(Document(
+    #         page_content="split",
+    #         metadata={
+    #             'id': "{doc.id}-{i}",
+    #             'author': "doc.metadata['author']",
+    #             'title': "doc.metadata['title']",
+    #             'url': "doc.metadata['url']",
+    #             'table_of_contents': "doc.metadata['table_of_contents']",
+    #             'book_intro': "doc.metadata['book_intro']",
+    #             'publisher_review': "doc.metadata['publisher_review']",
+    #             'review': "doc.metadata['review']"
+    #         }
+    #     ))
 
-    prompt = ChatPromptTemplate(
-        input_variables=['context', 'question'],
-        messages=[HumanMessagePromptTemplate(prompt=PromptTemplate(
-            input_variables=['context', 'question'],
-            template=
-            '''You are an assistant for question-answering tasks.
-            Use the following pieces of retrieved context to answer the question.
-            If you don't know the answer, just say that you don't know.
-            Use three sentences maximum and keep the answer concise.
-            \nQuestion: {question}
-            \nContext: {context}
-            \nAnswer:'''
-    ))])
-    OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
-    vectorstore = Chroma.from_documents(
-        documents=similar_docs,
-        embedding=OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+    # prompt = ChatPromptTemplate(
+    #     input_variables=['context', 'question'],
+    #     messages=[HumanMessagePromptTemplate(prompt=PromptTemplate(
+    #         input_variables=['context', 'question'],
+    #         template=
+    #         '''You are an assistant for question-answering tasks.
+    #         Use the following pieces of retrieved context to answer the question.
+    #         If you don't know the answer, just say that you don't know.
+    #         Use three sentences maximum and keep the answer concise.
+    #         \nQuestion: {question}
+    #         \nContext: {context}
+    #         \nAnswer:'''
+    # ))])
+    # OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
+    # vectorstore = Chroma.from_documents(
+    #     documents=similar_docs,
+    #     embedding=OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+    # )
+
+    # model = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+    # qa_chain = RetrievalQA.from_chain_type(
+    #     llm=model,
+    #     retriever=vectorstore.as_retriever(),
+    #     chain_type_kwargs={"prompt": prompt}
+    # )
+    # response = qa_chain({"query": question})
+
+    # 프롬프트 생성
+    prompt = f"""You are an assistant for question-answering tasks.
+    Use the following pieces of retrieved context to answer the question.
+    If you don't know the answer, just say that you don't know.
+    Use three sentences maximum and keep the answer concise.
+    \nQuestion: {question}
+    \nContext: {context}
+    \nAnswer:"""
+
+    # LLM
+    model = ChatOpenAI(temperature=0, model="gpt-4o")
+
+    # RAG pipeline
+    chain = (
+        RunnablePassthrough(lambda x: prompt)  # 함수를 직접 전달
+        | model
+        | StrOutputParser()
     )
 
-    model = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
-    qa_chain = RetrievalQA.from_chain_type(
-        llm=model,
-        retriever=vectorstore.as_retriever(),
-        chain_type_kwargs={"prompt": prompt}
-    )
-    response = qa_chain({"query": question})
+    # 파이프라인 실행
+    output = chain.invoke(query)
+
     # # Define the prompt template
     # prompt_template = '''
     # You are an assistant for question-answering tasks.
