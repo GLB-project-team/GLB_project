@@ -133,11 +133,3 @@ def crawl_single_page(url):
     finally:
         # 드라이버 종료
         driver.quit()
-
-
-def crawl_book_data(urls):
-    exits = 0
-    if exits:
-        first_crawling()
-
-    return json.dumps(crawled_data)

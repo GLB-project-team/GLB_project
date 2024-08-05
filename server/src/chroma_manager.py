@@ -1,7 +1,9 @@
 # Chroma 클라이언트 생성
 from chromadb.config import Settings
+# from langchain_community.vectorstores import Chroma
+# from langchain_community.embeddings import OpenAIEmbeddings
+from langchain.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import OpenAIEmbeddings
 import os
 import uuid
 import random
@@ -11,20 +13,26 @@ OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 def chroma_init(collection_name):
     client = chromadb.HttpClient(
-        host="0.0.0.0", port=8000, settings=Settings(allow_reset=True)
+        host="glb_project-chromadb-1", port=8000, settings=Settings(allow_reset=True)
     )
+    embeddings_function = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+    try:
+        collection = client.get_collection[collection_name]
+    except: 
+        collection = client.create_collection(collection_name)
+    finally:
+        return client
+
     # col = client.list_collections()
     # if not col[collection_name]:
     #     client.reset()  # 데이터베이스 초기화
-    #     collection = client.create_collection(collection_name)
+    #     collection = client.create_collection(collection_name, embeddings_function=embeddings_function)
     # else:
     #     collection = client.get_collention[collection_name]
-    embeddings_function = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
-    collection = client.get_or_create_collention(
-        collection_name, 
-        embedding_function=embeddings_function
-    )
-    return client
+    # collection = client.get_or_create_collention(
+    #     collection_name, 
+    #     embedding_function=embeddings_function
+    # )
 
 def chroma_search(client, collection_name, query, k=5):
     embeddings_function = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
