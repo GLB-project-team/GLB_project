@@ -66,9 +66,14 @@ def db_insert(client, collection_name, doc):
         )
         split_docs.append(split_doc)
 
-    for split_doc in split_docs:
-        uuid_val = uuid.uuid1()
-        collection.add(ids=[str(uuid_val)], documents=split_doc.page_content, metadatas=split_doc.metadata)
+    ids = [str(uuid.uuid1()) for _ in split_docs]
+    documents = [split_doc.page_content for split_doc in split_docs]
+    metadatas = [split_doc.metadata for split_doc in split_docs]
+
+    collection.add(ids=ids, documents=documents, metadatas=metadatas)
+    # for split_doc in split_docs:
+    #     uuid_val = uuid.uuid1()
+    #     collection.add(ids=[str(uuid_val)], documents=split_doc.page_content, metadatas=split_doc.metadata)
         # collection.add(ids=[str(uuid_val)], documents=split_doc.page_content)
 
 def chroma_search(client, collection_name, query, k=5):
@@ -81,7 +86,7 @@ def chroma_search(client, collection_name, query, k=5):
         embedding_function=openai_ef,
     )
     # docs = search_db.similarity_search(query, k=k)
-    docs = search_db.similarity_search_with_score(query)
+    docs = search_db.similarity_search_with_score(query, k=5)
     return docs
 
 def check_url_exists(client, collection_name, url):
@@ -92,6 +97,8 @@ def check_url_exists(client, collection_name, url):
 
     # 메타데이터에서 URL 검색
     result = collection.get(where={"url": url})
+    # print(result)
+    print(result['metadatas'])
     return bool(result['metadatas'])
 
 
