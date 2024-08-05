@@ -213,7 +213,9 @@ def index():
 
 @app.route('/ask', methods=['POST'])
 def ask():
-    user_question = request.form['question']
+    data = request.json
+    user_question = data.get('question', '')
+    # user_question = request.form['question']
     if user_question.lower() in ['exit', 'quit', 'q']:
         return jsonify({'response': 'Goodbye!'})
     from src.chroma_manager import chroma_init
@@ -230,51 +232,91 @@ def ask():
     # print(docs[0].page_content)
 
     return jsonify({'response': result})
+# Document 클래스 정의
+class Document:
+    def __init__(self, page_content, metadata):
+        self.id = str(uuid.uuid4())
+        self.page_content = page_content
+        self.metadata = metadata
 
 def get_chat_response(question, client, collection_name):
     from src.chroma_manager import chroma_search
     similar_docs = chroma_search(client, collection_name, question)
-    context = "\n".join([doc.page_content for doc in similar_docs])
+    if similar_docs:
+        context = "\n".join([doc.page_content for doc in similar_docs])
+    else:
+        similar_docs = []
+        # doc = Document(
+        #     page_content=split,
+        #     metadata={
+        #         'id': f"asdf-1",
+        #         'author': 'doc.metadata['author']',
+        #         'title': 'doc.metadata['title']',
+        #         'url': doc.metadata['url'],
+        #         'table_of_contents': doc.metadata['table_of_contents'],
+        #         'book_intro': doc.metadata['book_intro'],
+        #         'publisher_review': doc.metadata['publisher_review'],
+        #         'review': doc.metadata['review']
+        #     }
+        # )
+        similar_docs.append(Document(
+            page_content="split",
+            metadata={
+                'id': "{doc.id}-{i}",
+                'author': "doc.metadata['author']",
+                'title': "doc.metadata['title']",
+                'url': "doc.metadata['url']",
+                'table_of_contents': "doc.metadata['table_of_contents']",
+                'book_intro': "doc.metadata['book_intro']",
+                'publisher_review': "doc.metadata['publisher_review']",
+                'review': "doc.metadata['review']"
+            }
+        ))
 
-    # prompt = ChatPromptTemplate(
-    #     input_variables=['context', 'question'],
-    #     messages=[HumanMessagePromptTemplate(prompt=PromptTemplate(
-    #         input_variables=['context', 'question'],
-    #         template=
-    #         '''You are an assistant for question-answering tasks.
-    #         Use the following pieces of retrieved context to answer the question.
-    #         If you don't know the answer, just say that you don't know.
-    #         Use three sentences maximum and keep the answer concise.
-    #         \nQuestion: {question}
-    #         \nContext: {context}
-    #         \nAnswer:'''
-    # ))])
+    prompt = ChatPromptTemplate(
+        input_variables=['context', 'question'],
+        messages=[HumanMessagePromptTemplate(prompt=PromptTemplate(
+            input_variables=['context', 'question'],
+            template=
+            '''You are an assistant for question-answering tasks.
+            Use the following pieces of retrieved context to answer the question.
+            If you don't know the answer, just say that you don't know.
+            Use three sentences maximum and keep the answer concise.
+            \nQuestion: {question}
+            \nContext: {context}
+            \nAnswer:'''
+    ))])
+    OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
+    vectorstore = Chroma.from_documents(
+        documents=similar_docs,
+        embedding=OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+    )
 
-    # model = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
-    # qa_chain = RetrievalQA.from_chain_type(
-    #     llm=model,
-    #     retriever=vectorstore.as_retriever(),
-    #     chain_type_kwargs={"prompt": prompt}
-    # )
-    # response = qa_chain({"query": question})
-    # Define the prompt template
-    prompt_template = '''
-    You are an assistant for question-answering tasks.
-    Use the following pieces of retrieved context to answer the question.
-    If you don't know the answer, just say that you don't know.
-    Use three sentences maximum and keep the answer concise.
-    \nQuestion: {question}
-    \nContext: {context}
-    \nAnswer:'''
-
-    # Format the prompt with the context and question
-    prompt = prompt_template.format(question=question, context=context)
-
-    # Initialize the OpenAI model (using LangChain)
     model = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+    qa_chain = RetrievalQA.from_chain_type(
+        llm=model,
+        retriever=vectorstore.as_retriever(),
+        chain_type_kwargs={"prompt": prompt}
+    )
+    response = qa_chain({"query": question})
+    # # Define the prompt template
+    # prompt_template = '''
+    # You are an assistant for question-answering tasks.
+    # Use the following pieces of retrieved context to answer the question.
+    # If you don't know the answer, just say that you don't know.
+    # Use three sentences maximum and keep the answer concise.
+    # \nQuestion: {question}
+    # \nContext: {context}
+    # \nAnswer:'''
 
-    # Get the response from the model
-    response = model(prompt)
+    # # Format the prompt with the context and question
+    # prompt = prompt_template.format(question=question, context=context)
+
+    # # Initialize the OpenAI model (using LangChain)
+    # model = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+
+    # # Get the response from the model
+    # response = model(prompt)
 
     return response["result"]
 
