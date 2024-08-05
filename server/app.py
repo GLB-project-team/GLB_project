@@ -26,22 +26,21 @@ def get_data_chromadb():
     from src.chroma_manager import chroma_init, get_chromadb_data
     collection_name = 'book_collection'
     client = chroma_init(collection_name)
-    print(get_chromadb_data(client, collection_name))
+    # print(get_chromadb_data(client, collection_name))
     return jsonify({"message": "Document inserted successfully"}), 201
 
 def get_chat_response(question, client, collection_name):
     from src.chroma_manager import chroma_search
     similar_docs = chroma_search(client, collection_name, question)
     # max_similarity_doc = min(similar_docs, key=lambda x: x[1])[0].page_content
-    print(similar_docs)
+    # print(similar_docs)
     if similar_docs:
         # context = "\n".join([doc.page_content for doc in similar_docs])
         context = "\n".join([doc[0].page_content for doc in similar_docs])
     else:
         context = '없음'
         similar_docs = []
-    # print('ㅅㅇㅅㅇㄴㅁ')
-    # print(context)
+    print(context)
     # 프롬프트 생성
     prompt = f"""You are an assistant for question-answering tasks.
     Use the following pieces of retrieved context to answer the question.
@@ -90,6 +89,17 @@ def local_craw_with_insert():
     from src.crawler import crawling_manager
 
     doc = crawling_manager()
+    return jsonify({"message": f"Document inserted successfully\n{doc}"}), 201
+
+@app.route('/crawler/checkurl', methods=['GET'])
+def check_url():
+    from src.chroma_manager import check_url_exists, chroma_init
+
+    url = "https://product.kyobobook.co.kr/detail/S000213800371"
+    collection_name = 'book_collection'
+    client = chroma_init(collection_name)
+
+    doc = check_url_exists(client, collection_name, url)
     return jsonify({"message": f"Document inserted successfully\n{doc}"}), 201
 
 if __name__ == "__main__":
