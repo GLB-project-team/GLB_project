@@ -153,38 +153,39 @@
         </form>
     </div>
     <script>
-        document.getElementById('message-form').addEventListener('submit', async function(event) {
-            event.preventDefault();
+        document.getElementById('message-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // 폼 제출이 페이지를 새로 고침하는 것을 막습니다.
             const messageInput = document.getElementById('message-input');
             const messagesDiv = document.getElementById('messages');
-    
-            // 입력 시 예시 텍스트를 삭제
+        
+            if (messageInput.value.trim() === "") return; // 입력값이 비어있으면 무시
+        
+            // 예시 텍스트 제거
             const exampleText = document.querySelector('.example-text');
             if (exampleText) {
                 exampleText.remove();
             }
-    
+        
             const userMessage = messageInput.value;
-            messagesDiv.innerHTML += <div class="message user">You: ${userMessage}</div>;
-            messageInput.value = '';
-    
-            const response = await fetch('/ask', {
+            messagesDiv.innerHTML += `<div class="message user">You: ${userMessage}</div>`;
+        
+            fetch('/ask', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ question: userMessage })
-            });
-    
-            const data = await response.json();
-            messagesDiv.innerHTML += <div class="message bot">AI: ${data.response}</div>;
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            })
+            .then(response => response.json())
+            .then(data => {
+                messagesDiv.innerHTML += `<div class="message bot">AI: ${data.response}</div>`;
+                messagesDiv.scrollTop = messagesDiv.scrollHeight; // 채팅창을 가장 최근 메시지 위치로 스크롤
+            })
+            .catch(error => console.error('Error:', error));
+        
+            messageInput.value = ''; // 입력 필드 초기화
         });
-    
-        document.querySelector('.reset').addEventListener('click', function() {
-            document.getElementById('messages').innerHTML = '<div class="example-text">원하시는 분야, 현재 감정 상태 등을 물어책보살에게 말해보세요!!!<br>ex) 자존감이 많이 떨어져 있어. 자존감을 채울 수 있는 책을 추천해줘.</div>';
-            document.getElementById('message-input').value = '';
-        });
+        
     </script>
     
 </body>
