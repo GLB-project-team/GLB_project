@@ -34,47 +34,32 @@ def get_chat_response(question, client, collection_name):
     from src.chroma_manager import chroma_search
     from langchain.prompts import PromptTemplate
     from langchain.chains import RetrievalQA
-
-    similar_docs, search_db = chroma_search(client, collection_name, question)
-    # max_similarity_doc = min(similar_docs, key=lambda x: x[1])[0].page_content
-    print("similar_docs", flush=True)
-    print(similar_docs, flush=True)
-    if similar_docs:
-        # context = "\n".join([doc.page_content for doc in similar_docs])
-        context = "\n".join([doc[0].page_content for doc in similar_docs])
-    else:
-        context = '없음'
-        similar_docs = []
-
-    # 프롬프트 생성
-    prompt = f"""You are an assistant for question-answering tasks.
-    Use the following pieces of retrieved context to answer the question.
-    If you don't know the answer, just say that you don't know.
-    Use three sentences maximum and keep the answer concise.
-    \nQuestion: {question}
-    \nContext: {context}
-    \nAnswer:"""
-    print("컨텍스트다 이눔아", flush=True)
-    print(context, flush=True)
-    # LLM
     from langchain_openai import ChatOpenAI
     from langchain_core.runnables import RunnablePassthrough
     from langchain_core.output_parsers import StrOutputParser
 
-    model = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
+    # ChromaDB 검색 실행
+    similar_docs, search_db = chroma_search(client, collection_name, question)
+    if not similar_docs:
+        # ChromaDB에서 문서를 찾지 못했을 경우, GPT 모델을 이용해 직접 답변 생성
+        prompt = """You are an assistant for question-answering tasks.
+            Use your knowledge to answer the question.
+            If you don't know the answer, just say that you don't know.
+            Use three sentences maximum and keep the answer concise.
+            Here is the context:{context}
+            \nQuestion: {question}
+            \nAnswer:"""
+        model = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
+        chain = (
+            RunnablePassthrough(lambda x: prompt)  # 프롬프트 직접 전달
+            | model
+            | StrOutputParser()
+        )
+        output = chain.invoke(question)
+        return output, prompt
 
-    # # RAG pipeline
-    chain = (
-        RunnablePassthrough(lambda x: prompt)  # 함수를 직접 전달
-        | model
-        | StrOutputParser()
-    )
-
-    # # 파이프라인 실행
-    output = chain.invoke(question)
-    # return output, template
-
-    template="""
+    # 문서가 존재할 경우, 검색된 문서를 사용하여 답변 생성
+    template = """
     You are an expert assistant for answering questions based on specific contextual information provided. Your task is to answer the question using only the provided context. If the answer is not clearly found within the context, state that you don't have enough information to answer. 
 
     The context provided includes important information about a book, such as the title, author, introduction, publisher review, and notable excerpts. 
@@ -85,31 +70,26 @@ def get_chat_response(question, client, collection_name):
 
     Answer:
     """
-    prompt = PromptTemplate(
+    prompt_template = PromptTemplate(
         template=template,
         input_variables=["context", "question"]
     )
     retriever = search_db.as_retriever()
-
+    model = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
     qa_chain = RetrievalQA.from_chain_type(
         model,
         retriever=retriever,
         return_source_documents=True,
-        chain_type_kwargs={"prompt": prompt}
+        chain_type_kwargs={"prompt": prompt_template}
     )
 
     result = qa_chain({"query": question})
-
     answer = result["result"]
     source_documents = result["source_documents"]
 
-    print("Answer:", flush=True)
-    print(answer, flush=True)
-    print("\nContext:", flush=True)
-    for doc in source_documents:
-        print(doc.page_content, flush=True)
+    context = "\n".join([doc.page_content for doc in source_documents])
+    return answer, context
 
-    return result["result"], template
 
 @app.route('/crawler/request', methods=['POST'])
 def request_craw_with_insert():

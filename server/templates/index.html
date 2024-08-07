@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: url('static/images/reading_image1.jpg') no-repeat center center fixed;
+            background: url('static/images/image2.jpeg') no-repeat center center fixed;
             background-size: cover;
             height: 100vh;
             margin: 0;
@@ -131,8 +131,8 @@
 </head>
 <body>
     <div id="video-container">
-        <video controls autoplay loop muted>
-            <source src="static/video/video.mp4" type="video/mp4">
+        <video id="video-player" controls autoplay muted>
+            <source src="static/video/video1.mp4" type="video/mp4">
             Your browser does not support the video tag.
         </video>
     </div>
@@ -153,6 +153,25 @@
         </form>
     </div>
     <script>
+        const videoSources = [
+            'static/video/video1.mp4',
+            'static/video/video2.mp4',
+            'static/video/video3.mp4',
+            'static/video/video4.mp4',
+            'static/video/video5.mp4',
+            'static/video/video6.mp4',
+            'static/video/video7.mp4'
+        ];
+
+        const videoPlayer = document.getElementById('video-player');
+        let currentVideoIndex = 0;
+
+        videoPlayer.addEventListener('ended', () => {
+            currentVideoIndex = (currentVideoIndex + 1) % videoSources.length;
+            videoPlayer.src = videoSources[currentVideoIndex];
+            videoPlayer.play();
+        });
+
         document.getElementById('message-form').addEventListener('submit', function(event) {
             event.preventDefault(); // 폼 제출이 페이지를 새로 고침하는 것을 막습니다.
             const messageInput = document.getElementById('message-input');
@@ -178,14 +197,17 @@
             })
             .then(response => response.json())
             .then(data => {
-                messagesDiv.innerHTML += `<div class="message bot">AI: ${data.response}<br><br>${data.prompt}</div>`;
+                messagesDiv.innerHTML += `<div class="message bot">AI: ${data.response}</div>`;
                 messagesDiv.scrollTop = messagesDiv.scrollHeight; // 채팅창을 가장 최근 메시지 위치로 스크롤
             })
             .catch(error => console.error('Error:', error));
         
             messageInput.value = ''; // 입력 필드 초기화
         });
-        
+        document.querySelector('.reset').addEventListener('click', function() {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '<div class="example-text">원하시는 분야, 현재 감정 상태 등을 물어책보살에게 말해보세요!!!<br>ex) 자존감이 많이 떨어져 있어. 자존감을 채울 수 있는 책을 추천해줘.</div>'; 
+        });
     </script>
     
 </body>
