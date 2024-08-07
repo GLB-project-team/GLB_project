@@ -1,6 +1,6 @@
 # app.py
 from flask import Flask, request, render_template, jsonify
-
+from langchain.memory import ConversationBufferMemory
 # Flask 애플리케이션 초기화
 app = Flask(__name__)
 
@@ -30,7 +30,7 @@ def get_data_chromadb():
 
     return jsonify({"response": result})
 
-def get_chat_response(question, client, collection_name):
+def get_chat_response(question, client, collection_name, chat_history = None):
     from src.chroma_manager import chroma_search
     from langchain.prompts import PromptTemplate
     from langchain.chains import RetrievalQA
@@ -60,19 +60,31 @@ def get_chat_response(question, client, collection_name):
 
     # 문서가 존재할 경우, 검색된 문서를 사용하여 답변 생성
     template = """
-    You are an expert assistant for answering questions based on specific contextual information provided. Your task is to answer the question using only the provided context. If the answer is not clearly found within the context, state that you don't have enough information to answer. 
-
-    The context provided includes important information about a book, such as the title, author, introduction, publisher review, and notable excerpts. 
-    Here is the context:
-    {context}
-
-    Question: {question}
-
-    Answer:
+    너는 책 추천 assistant야. context를 기반으로 question에 대한 대답을 다음과 같은 형식으로 대답해줘. 각 항목은 다른 문단으로 작성해줘.
+    첫 문장은 예시와 같이 현재 상황을 공감하는 말을 해줘. (예시. user : 동물이 나오는 줄거리의 책을 추천해줘. ai : 동물이 나오는 줄거리의 책을 원하시는군요!)
+    
+    
+    ♥책 제목:
+    ♥목차 : \n
+    ♥저자 : \n
+    ♥책 내용 요약: \n
+    ♥책 리뷰 요약: \n
+    ♥책 추천 이유: \n
+            \n{chat_history}
+            \nContext:{context}
+            \nQuestion: {question}
+            \nAnswer:
     """
+    
+    if chat_history:
+        chat_history_text = "\n이전 대화 내용 요약:" + chat_history
+    else:
+        chat_history_text=""
+
+
     prompt_template = PromptTemplate(
         template=template,
-        input_variables=["context", "question"]
+        input_variables=["context", "question", "chat_history"]
     )
     retriever = search_db.as_retriever()
     model = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
@@ -80,15 +92,21 @@ def get_chat_response(question, client, collection_name):
         model,
         retriever=retriever,
         return_source_documents=True,
-        chain_type_kwargs={"prompt": prompt_template}
+        chain_type_kwargs={"prompt": prompt_template,
+                           "memory": ConversationBufferMemory(memory_key="chat_history", input_key="question")}
     )
+    inputs = {
+        "query": question,
+        "chat_history": chat_history_text  # 'chat_history' 키를 포함하여 입력값 설정
+    }
 
-    result = qa_chain({"query": question})
+    result = qa_chain(inputs)
     answer = result["result"]
     source_documents = result["source_documents"]
 
     context = "\n".join([doc.page_content for doc in source_documents])
     return answer, context
+
 
 # def get_chat_response(question, client, collection_name):
 #     from src.chroma_manager import chroma_search

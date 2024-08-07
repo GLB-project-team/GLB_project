@@ -74,6 +74,10 @@
             margin-bottom: 15px;
             align-self: flex-start;
             font-size: 1.3em;
+           
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            max-width: 80%
         }
         .user {
             color: black;
@@ -172,12 +176,24 @@
             videoPlayer.play();
         });
 
+        function typeEffect(element, text, speed) {
+            let i = 0;
+            function typing() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(typing, speed);
+                }
+            }
+            typing();
+        }
+        
         document.getElementById('message-form').addEventListener('submit', function(event) {
-            event.preventDefault(); // 폼 제출이 페이지를 새로 고침하는 것을 막습니다.
+            event.preventDefault();
             const messageInput = document.getElementById('message-input');
             const messagesDiv = document.getElementById('messages');
         
-            if (messageInput.value.trim() === "") return; // 입력값이 비어있으면 무시
+            if (messageInput.value.trim() === "") return;
         
             // 예시 텍스트 제거
             const exampleText = document.querySelector('.example-text');
@@ -186,7 +202,7 @@
             }
         
             const userMessage = messageInput.value;
-            messagesDiv.innerHTML += `<div class="message user"> ${userMessage}</div>`;
+            messagesDiv.innerHTML += `<div class="message user">${userMessage}</div>`;
         
             fetch('/ask', {
                 method: 'POST',
@@ -197,13 +213,20 @@
             })
             .then(response => response.json())
             .then(data => {
-                messagesDiv.innerHTML += `<div class="message bot"> ${data.response}</div>`;
+                const botMessageElement = document.createElement("div");
+                botMessageElement.className = "message bot";
+                messagesDiv.appendChild(botMessageElement);
+        
+                // 타이핑 효과 적용
+                typeEffect(botMessageElement, data.response, 50);
+        
                 messagesDiv.scrollTop = messagesDiv.scrollHeight; // 채팅창을 가장 최근 메시지 위치로 스크롤
             })
             .catch(error => console.error('Error:', error));
         
             messageInput.value = ''; // 입력 필드 초기화
         });
+        
         document.querySelector('.reset').addEventListener('click', function() {
             const messagesDiv = document.getElementById('messages');
             messagesDiv.innerHTML = '<div class="example-text">원하시는 분야, 현재 감정 상태 등을 물어책보살에게 말해보세요!!!<br>ex) 자존감이 많이 떨어져 있어. 자존감을 채울 수 있는 책을 추천해줘.</div>'; 
