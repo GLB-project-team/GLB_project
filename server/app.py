@@ -17,17 +17,18 @@ def ask():
     from src.chroma_manager import chroma_init
     collection_name = "book_collection"
     client = chroma_init(collection_name)
-    result = get_chat_response(user_question, client, collection_name)
+    result, prompt = get_chat_response(user_question, client, collection_name)
 
-    return jsonify({'response': result})
+    return jsonify({'response': result, 'prompt': prompt})
 
 @app.route('/chromadb/peek', methods=['GET'])
 def get_data_chromadb():
     from src.chroma_manager import chroma_init, get_chromadb_data
     collection_name = 'book_collection'
     client = chroma_init(collection_name)
-    # print(get_chromadb_data(client, collection_name))
-    return jsonify({"message": "Document inserted successfully"}), 201
+    result = get_chromadb_data(client, collection_name)
+
+    return jsonify({"response": result})
 
 def get_chat_response(question, client, collection_name):
     from src.chroma_manager import chroma_search
@@ -40,7 +41,7 @@ def get_chat_response(question, client, collection_name):
     else:
         context = '없음'
         similar_docs = []
-    print(context)
+
     # 프롬프트 생성
     prompt = f"""You are an assistant for question-answering tasks.
     Use the following pieces of retrieved context to answer the question.
@@ -66,23 +67,32 @@ def get_chat_response(question, client, collection_name):
 
     # 파이프라인 실행
     output = chain.invoke(question)
-    return output
+    return output, prompt
 
 @app.route('/crawler/request', methods=['POST'])
 def request_craw_with_insert():
     from src.crawler import crawl_single_page
     from src.chroma_manager import chroma_init, db_insert, check_url_exists
-    url = 0
+
+    # POST 요청으로부터 URL 가져오기
+    data = request.get_json()
+    url = data.get('url')
+
     collection_name = 'book_collection'
     client = chroma_init(collection_name)
 
+    if not url:
+        return jsonify({"error": "URL is required"}), 400
+
     if check_url_exists(client, collection_name, url):
-        print(f"Document with URL {url} already exists.")
+        return jsonify({"message": f"Document with URL {url} already exists."}), 200
     else:
         doc = crawl_single_page(url)
         if doc:
             db_insert(client, collection_name, doc)
-    return jsonify({"message": "Document inserted successfully"}), 201
+            return jsonify({"message": "Document inserted successfully"}), 201
+        else:
+            return jsonify({"error": "Failed to crawl the URL"}), 500
 
 @app.route('/crawler/local', methods=['POST'])
 def local_craw_with_insert():

@@ -10,14 +10,14 @@ services:
       - chromadb
     env_file:
       - ./.env
-    restart: always
+    # restart: always
     networks:
       - net
 
   chromadb:
     image: chromadb/chroma:latest
     volumes:
-      - ./chromadb:/chroma/chroma
+      - ./chromaDB:/chroma/chroma
     environment:
       - IS_PERSISTENT=TRUE
       - ALLOW_RESET=TRUE
