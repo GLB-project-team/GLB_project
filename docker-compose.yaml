@@ -10,6 +10,8 @@ services:
       - chromadb
     env_file:
       - ./.env
+    environment:
+      - PYTHONUNBUFFERED=1
     # restart: always
     networks:
       - net

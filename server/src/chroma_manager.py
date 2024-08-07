@@ -89,7 +89,7 @@ def chroma_search(client, collection_name, query, k=5):
     )
     # docs = search_db.similarity_search(query, k=k)
     docs = search_db.similarity_search_with_score(query, k=5)
-    return docs
+    return docs, search_db
 
 def check_url_exists(client, collection_name, url):
     try:

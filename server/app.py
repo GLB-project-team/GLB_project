@@ -32,9 +32,13 @@ def get_data_chromadb():
 
 def get_chat_response(question, client, collection_name):
     from src.chroma_manager import chroma_search
-    similar_docs = chroma_search(client, collection_name, question)
+    from langchain.prompts import PromptTemplate
+    from langchain.chains import RetrievalQA
+
+    similar_docs, search_db = chroma_search(client, collection_name, question)
     # max_similarity_doc = min(similar_docs, key=lambda x: x[1])[0].page_content
-    # print(similar_docs)
+    print("similar_docs", flush=True)
+    print(similar_docs, flush=True)
     if similar_docs:
         # context = "\n".join([doc.page_content for doc in similar_docs])
         context = "\n".join([doc[0].page_content for doc in similar_docs])
@@ -50,7 +54,8 @@ def get_chat_response(question, client, collection_name):
     \nQuestion: {question}
     \nContext: {context}
     \nAnswer:"""
-
+    print("컨텍스트다 이눔아", flush=True)
+    print(context, flush=True)
     # LLM
     from langchain_openai import ChatOpenAI
     from langchain_core.runnables import RunnablePassthrough
@@ -58,16 +63,53 @@ def get_chat_response(question, client, collection_name):
 
     model = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
 
-    # RAG pipeline
+    # # RAG pipeline
     chain = (
         RunnablePassthrough(lambda x: prompt)  # 함수를 직접 전달
         | model
         | StrOutputParser()
     )
 
-    # 파이프라인 실행
+    # # 파이프라인 실행
     output = chain.invoke(question)
-    return output, prompt
+    # return output, template
+
+    template="""
+    You are an expert assistant for answering questions based on specific contextual information provided. Your task is to answer the question using only the provided context. If the answer is not clearly found within the context, state that you don't have enough information to answer. 
+
+    The context provided includes important information about a book, such as the title, author, introduction, publisher review, and notable excerpts. 
+    Here is the context:
+    {context}
+
+    Question: {question}
+
+    Answer:
+    """
+    prompt = PromptTemplate(
+        template=template,
+        input_variables=["context", "question"]
+    )
+    retriever = search_db.as_retriever()
+
+    qa_chain = RetrievalQA.from_chain_type(
+        model,
+        retriever=retriever,
+        return_source_documents=True,
+        chain_type_kwargs={"prompt": prompt}
+    )
+
+    result = qa_chain({"query": question})
+
+    answer = result["result"]
+    source_documents = result["source_documents"]
+
+    print("Answer:", flush=True)
+    print(answer, flush=True)
+    print("\nContext:", flush=True)
+    for doc in source_documents:
+        print(doc.page_content, flush=True)
+
+    return result["result"], template
 
 @app.route('/crawler/request', methods=['POST'])
 def request_craw_with_insert():
