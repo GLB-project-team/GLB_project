@@ -33,17 +33,17 @@
         h1 {
             position: absolute;
             top: 20px;
-            right: 240px;
+            right: 255px;
             font-size: 3.0em;
             color: white;
             text-shadow: 2px 2px 4px #000;
         }
         #chatbox {
             position: absolute;
-            top: 140px; /* Adjust this value to create margin between title and chatbox */
+            top: 140px; 
             right: 150px;
             width: 600px;
-            height: 800px;
+            height: 950px;
             background: rgba(255, 255, 255, 0.9);
             padding: 30px;
             border-radius: 10px;
@@ -145,7 +145,7 @@
             </div>
         </div>
         <form id="message-form">
-            <input type="text" id="message-input" placeholder="물어책보살에게 물어봐!!!" required>
+            <input type="text" id="message-input" placeholder="책보살에게 물어봐!!!" required>
             <div class="button-group">
                 <button type="submit">Send</button>
                 <button type="button" class="reset">Reset</button>
@@ -186,7 +186,7 @@
             }
         
             const userMessage = messageInput.value;
-            messagesDiv.innerHTML += `<div class="message user">You: ${userMessage}</div>`;
+            messagesDiv.innerHTML += `<div class="message user"> ${userMessage}</div>`;
         
             fetch('/ask', {
                 method: 'POST',
@@ -197,7 +197,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                messagesDiv.innerHTML += `<div class="message bot">AI: ${data.response}</div>`;
+                messagesDiv.innerHTML += `<div class="message bot"> ${data.response}</div>`;
                 messagesDiv.scrollTop = messagesDiv.scrollHeight; // 채팅창을 가장 최근 메시지 위치로 스크롤
             })
             .catch(error => console.error('Error:', error));
