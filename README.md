@@ -29,7 +29,10 @@ NIPA-Google ML 부트캠프 협력 실무 프로젝트를 통해 뭉친 팀 5조
 
 ## 동작 화면
 
-![image](https://github.com/user-attachments/assets/ea9ab6f9-8061-4540-86ec-a9e6246b6e11)
+![image](https://github.com/user-attachments/assets/986b1b39-db80-4f1c-b8be-2bcbe701bbc3)
+![image](https://github.com/user-attachments/assets/459265d9-884f-490a-853d-32980bad15e0)
+![image](https://github.com/user-attachments/assets/8e576149-77bf-43b1-8fef-9746a9958f56)
+
 
 
 ## 참가자 코멘트
