@@ -18,15 +18,16 @@ def ask():
     from src.chroma_manager import chroma_init
     collection_name = "book_collection"
     client = chroma_init(collection_name)
-    result = get_chat_response(user_question, client, collection_name)
+    result, prompt = get_chat_response(user_question, client, collection_name)
 
-    return jsonify({'response': result})
+    return jsonify({'response': result, 'prompt': prompt})
 
 @app.route('/chromadb/peek', methods=['GET'])
 def get_data_chromadb():
     from src.chroma_manager import chroma_init, get_chromadb_data
     collection_name = 'book_collection'
     client = chroma_init(collection_name)
+<<<<<<< HEAD
     data = get_chromadb_data(client, collection_name)
     print(data)  
     #print(get_chromadb_data(client, collection_name))
@@ -52,6 +53,17 @@ def get_chat_response(question, client, collection_name):
     #print(f"similar_docs: {similar_docs}")
 
     #질문에 해당 단어가 포함된 책 찾기
+=======
+    result = get_chromadb_data(client, collection_name)
+
+    return jsonify({"response": result})
+
+def get_chat_response(question, client, collection_name):
+    from src.chroma_manager import chroma_search
+    similar_docs = chroma_search(client, collection_name, question)
+    # max_similarity_doc = min(similar_docs, key=lambda x: x[1])[0].page_content
+    # print(similar_docs)
+>>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
     if similar_docs:
         book_details = []
         for doc in similar_docs:
@@ -68,6 +80,7 @@ def get_chat_response(question, client, collection_name):
     #         print(f"similar_docs있으면 : {doc}")
     else:
         context = '없음'
+<<<<<<< HEAD
 
     print("------------------context------------------\n", context)
 
@@ -84,6 +97,10 @@ def get_chat_response(question, client, collection_name):
 #         similar_docs = []
     # print('ㅅㅇㅅㅇㄴㅁ')
     # print(context)
+=======
+        similar_docs = []
+
+>>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
     # 프롬프트 생성
     # prompt = f"""You are an assistant for question-answering tasks.
     # Use the following pieces of retrieved context to answer the question.
@@ -166,30 +183,56 @@ def get_chat_response(question, client, collection_name):
     #     chain_type_kwargs={"prompt": prompt}
     # )
 
+<<<<<<< HEAD
     # output = qa_chain(question)
     # return output
+=======
+    # 파이프라인 실행
+    output = chain.invoke(question)
+    return output, prompt
+>>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
 
 @app.route('/crawler/request', methods=['POST'])
 def request_craw_with_insert():
     from src.crawler import crawl_single_page
     from src.chroma_manager import chroma_init, db_insert, check_url_exists
-    url = 0
+
+    # POST 요청으로부터 URL 가져오기
+    data = request.get_json()
+    url = data.get('url')
+
     collection_name = 'book_collection'
     client = chroma_init(collection_name)
 
+    if not url:
+        return jsonify({"error": "URL is required"}), 400
+
     if check_url_exists(client, collection_name, url):
-        print(f"Document with URL {url} already exists.")
+        return jsonify({"message": f"Document with URL {url} already exists."}), 200
     else:
         doc = crawl_single_page(url)
         if doc:
             db_insert(client, collection_name, doc)
-    return jsonify({"message": "Document inserted successfully"}), 201
+            return jsonify({"message": "Document inserted successfully"}), 201
+        else:
+            return jsonify({"error": "Failed to crawl the URL"}), 500
 
 @app.route('/crawler/local', methods=['POST'])
 def local_craw_with_insert():
     from src.crawler import crawling_manager
 
     doc = crawling_manager()
+    return jsonify({"message": f"Document inserted successfully\n{doc}"}), 201
+
+@app.route('/crawler/checkurl', methods=['GET'])
+def check_url():
+    from src.chroma_manager import check_url_exists, chroma_init
+
+    url = "https://product.kyobobook.co.kr/detail/S000213800371"
+    collection_name = 'book_collection'
+    client = chroma_init(collection_name)
+
+    doc = check_url_exists(client, collection_name, url)
     return jsonify({"message": f"Document inserted successfully\n{doc}"}), 201
 
 if __name__ == "__main__":

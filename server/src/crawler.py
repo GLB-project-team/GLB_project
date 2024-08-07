@@ -26,13 +26,13 @@ chrome_options.add_argument("--headless")
 chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument('--disable-dev-shm-usage')
 
-def url_to_hash(url):
-    return hashlib.sha256(url.encode()).hexdigest()
+# def url_to_hash(url):
+#     return hashlib.sha256(url.encode()).hexdigest()
 
-def is_url_crawled(url):
-    url_hash = url_to_hash(url)
-    c.execute('SELECT 1 FROM crawled_urls WHERE url_hash=?', (url_hash,))
-    return c.fetchone() is not None
+# def is_url_crawled(url):
+#     url_hash = url_to_hash(url)
+#     c.execute('SELECT 1 FROM crawled_urls WHERE url_hash=?', (url_hash,))
+#     return c.fetchone() is not None
 
 def get_urls_in_csv(file_path='src/crawling_urls.csv'):
     try:

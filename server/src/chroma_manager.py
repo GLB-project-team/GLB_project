@@ -15,9 +15,15 @@ OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 def get_chromadb_data(client, collection_name):
     collection = client.get_collection(collection_name)
+<<<<<<< HEAD
     #return collection.peek()
     all_docs = collection.get()  # 모든 데이터 들어갔는지 확인
     return all_docs
+=======
+    # all_cotents = collection.peek()
+    all_cotents = collection.get()
+    return all_cotents
+>>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
 
 def chroma_init(collection_name):
     client = chromadb.HttpClient(
@@ -68,9 +74,14 @@ def db_insert(client, collection_name, doc):
         )
         split_docs.append(split_doc)
 
-    for split_doc in split_docs:
-        uuid_val = uuid.uuid1()
-        collection.add(ids=[str(uuid_val)], documents=split_doc.page_content, metadatas=split_doc.metadata)
+    ids = [str(uuid.uuid1()) for _ in split_docs]
+    documents = [split_doc.page_content for split_doc in split_docs]
+    metadatas = [split_doc.metadata for split_doc in split_docs]
+
+    collection.add(ids=ids, documents=documents, metadatas=metadatas)
+    # for split_doc in split_docs:
+    #     uuid_val = uuid.uuid1()
+    #     collection.add(ids=[str(uuid_val)], documents=split_doc.page_content, metadatas=split_doc.metadata)
         # collection.add(ids=[str(uuid_val)], documents=split_doc.page_content)
 
 def chroma_search(client, collection_name, query, metadata_field=None, k=5):
@@ -82,6 +93,7 @@ def chroma_search(client, collection_name, query, metadata_field=None, k=5):
         collection_name=collection_name,
         embedding_function=openai_ef,
     )
+<<<<<<< HEAD
 
 
     # if metadata_field:
@@ -97,6 +109,10 @@ def chroma_search(client, collection_name, query, metadata_field=None, k=5):
         docs = search_db.similarity_search_with_score(f"{metadata_field}: {query}", k=1)
     else:
         docs = search_db.similarity_search_with_score(query, k=1)
+=======
+    # docs = search_db.similarity_search(query, k=k)
+    docs = search_db.similarity_search_with_score(query, k=5)
+>>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
     return docs
 
     # docs = search_db.similarity_search(query, k=k)
@@ -111,6 +127,8 @@ def check_url_exists(client, collection_name, url):
 
     # 메타데이터에서 URL 검색
     result = collection.get(where={"url": url})
+    # print(result)
+    print(result['metadatas'])
     return bool(result['metadatas'])
 
 
