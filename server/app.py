@@ -27,8 +27,7 @@ def get_data_chromadb():
     from src.chroma_manager import chroma_init, get_chromadb_data
     collection_name = 'book_collection'
     client = chroma_init(collection_name)
-<<<<<<< HEAD
-<<<<<<< HEAD
+
     data = get_chromadb_data(client, collection_name)
     print(data)  
     #print(get_chromadb_data(client, collection_name))
@@ -54,9 +53,7 @@ def get_chat_response(question, client, collection_name):
     #print(f"similar_docs: {similar_docs}")
 
     #질문에 해당 단어가 포함된 책 찾기
-=======
-=======
->>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
+
     result = get_chromadb_data(client, collection_name)
 
     return jsonify({"response": result})
@@ -66,10 +63,7 @@ def get_chat_response(question, client, collection_name):
     similar_docs = chroma_search(client, collection_name, question)
     # max_similarity_doc = min(similar_docs, key=lambda x: x[1])[0].page_content
     # print(similar_docs)
-<<<<<<< HEAD
->>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
-=======
->>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
+
     if similar_docs:
         book_details = []
         for doc in similar_docs:
@@ -86,8 +80,6 @@ def get_chat_response(question, client, collection_name):
     #         print(f"similar_docs있으면 : {doc}")
     else:
         context = '없음'
-<<<<<<< HEAD
-<<<<<<< HEAD
 
     print("------------------context------------------\n", context)
 
@@ -104,14 +96,7 @@ def get_chat_response(question, client, collection_name):
 #         similar_docs = []
     # print('ㅅㅇㅅㅇㄴㅁ')
     # print(context)
-=======
-        similar_docs = []
 
->>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
-=======
-        similar_docs = []
-
->>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
     # 프롬프트 생성
     # prompt = f"""You are an assistant for question-answering tasks.
     # Use the following pieces of retrieved context to answer the question.
@@ -194,17 +179,6 @@ def get_chat_response(question, client, collection_name):
     #     chain_type_kwargs={"prompt": prompt}
     # )
 
-<<<<<<< HEAD
-    # output = qa_chain(question)
-    # return output
-=======
-    # 파이프라인 실행
-    output = chain.invoke(question)
-    return output, prompt
-<<<<<<< HEAD
->>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
-=======
->>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
 
 @app.route('/crawler/request', methods=['POST'])
 def request_craw_with_insert():
