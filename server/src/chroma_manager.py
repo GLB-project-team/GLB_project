@@ -15,7 +15,9 @@ OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 def get_chromadb_data(client, collection_name):
     collection = client.get_collection(collection_name)
-    return collection.peek()
+    # all_cotents = collection.peek()
+    all_cotents = collection.get()
+    return all_cotents
 
 def chroma_init(collection_name):
     client = chromadb.HttpClient(
