@@ -82,7 +82,7 @@ def crawl_single_page(url):
             print(f"Title not found for {url}: {e}")
 
         # 작가 이름 추출
-        try:
+        try: 
             author_xpath = '//*[@id="contents"]/div[1]/div/div[2]/div/div[1]/div[1]/div[1]/div[1]/div/div'
             author_element = wait.until(EC.presence_of_element_located((By.XPATH, author_xpath)))
             author = author_element.text.strip()
@@ -90,7 +90,7 @@ def crawl_single_page(url):
             author = "N/A"
             print(f"Author not found for {url}: {e}")
 
-        # 목차 추출
+        #목차 추출
         try:
             toc_xpath = '//*[@id="scrollSpyProdInfo"]/div[10]/div[2]/div[1]/div/ul/li'
             toc_elements = wait.until(EC.presence_of_all_elements_located((By.XPATH, toc_xpath)))
@@ -99,6 +99,22 @@ def crawl_single_page(url):
         except Exception as e:
             toc = "N/A"
             print(f"Table of contents not found for {url}: {e}")
+            
+        # 목차 추출 (여러 XPATH 경로 시도)
+        # toc_xpaths = [
+        #     '//*[@id="scrollSpyProdInfo"]/div[10]/div[2]/div[1]/div/ul/li',
+        #     '//*[@id="scrollSpyProdInfo"]/div[9]/div[2]/div[1]/div/ul/li'
+        # ]
+        # toc_content = []
+        # for xpath in toc_xpaths:
+        #     try:
+        #         toc_elements = wait.until(EC.presence_of_all_elements_located((By.XPATH, xpath)))
+        #         toc_content = [item.text.strip() for item in toc_elements]
+        #         if toc_content:
+        #             break
+        #     except Exception as e:
+        #         print(f"Table of contents not found for XPATH {xpath}: {e}")
+        # toc = "\n".join(toc_content) if toc_content else "N/A"
 
         # 책 속으로 추출
         try:

@@ -15,7 +15,9 @@ OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 def get_chromadb_data(client, collection_name):
     collection = client.get_collection(collection_name)
-    return collection.peek()
+    #return collection.peek()
+    all_docs = collection.get()  # 모든 데이터 들어갔는지 확인
+    return all_docs
 
 def chroma_init(collection_name):
     client = chromadb.HttpClient(
@@ -28,7 +30,7 @@ def chroma_init(collection_name):
         collection = client.get_collection(collection_name)
         print('get collection')
     except:
-        # client.reset()  # 데이터베이스 초기화
+        #client.reset()  # 데이터베이스 초기화
         collection = client.create_collection(collection_name)
         print('create collection')
     return client
@@ -71,7 +73,7 @@ def db_insert(client, collection_name, doc):
         collection.add(ids=[str(uuid_val)], documents=split_doc.page_content, metadatas=split_doc.metadata)
         # collection.add(ids=[str(uuid_val)], documents=split_doc.page_content)
 
-def chroma_search(client, collection_name, query, k=5):
+def chroma_search(client, collection_name, query, metadata_field=None, k=5):
     openai_ef = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
 
     # tell LangChain to use our client and collection name
@@ -80,9 +82,26 @@ def chroma_search(client, collection_name, query, k=5):
         collection_name=collection_name,
         embedding_function=openai_ef,
     )
-    # docs = search_db.similarity_search(query, k=k)
-    docs = search_db.similarity_search_with_score(query)
+
+
+    # if metadata_field:
+    #     # 메타데이터 필터링이 필요한 경우, 직접 메타데이터를 필터링
+    #     # 우선 검색 후, 메타데이터 기반으로 결과를 필터링
+    #     docs = search_db.similarity_search_with_score(query, k=k)
+    #     filtered_docs = [doc for doc in docs if metadata_field in doc[0].metadata]
+    # else:
+    #     filtered_docs = search_db.similarity_search_with_score(query, k=k)
+    # return filtered_docs
+
+    if metadata_field:
+        docs = search_db.similarity_search_with_score(f"{metadata_field}: {query}", k=1)
+    else:
+        docs = search_db.similarity_search_with_score(query, k=1)
     return docs
+
+    # docs = search_db.similarity_search(query, k=k)
+    # docs = search_db.similarity_search_with_score(query)
+    #return docs
 
 def check_url_exists(client, collection_name, url):
     try:
