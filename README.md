@@ -6,7 +6,7 @@ NIPA-Google ML 부트캠프 협력 실무 프로젝트를 통해 뭉친 팀 5조
 ## 팀원 소개
 | ![](https://github.com/LEE-Hyeon0771.png) | ![](https://github.com/xliiadastra.png) | ![](https://github.com/h-yunji.png) | ![](https://github.com/nxmyxxn.png) |
 | :--------------------------------------: | :--------------------------------------: | :--------------------------------------: | :-----------------------------------: |
-|             **이현<br>(Developer)<br>연세대학교**              |             **최이현<br>(Developer)<br>42Seoul**              |             **한윤지<br>(Developer)<br>국민대학교**              |            **조남윤<br>(Developer)<br>San Jose**            |
+|             **이현<br>(Developer)<br>연세대학교**              |             **최이현<br>(Developer)<br>42Seoul**              |             **한윤지<br>(Developer)<br>국민대학교**              |            **조남윤<br>(Developer)<br>San Jose State University**            |
 
 ## 프로젝트 배경/목표
 
