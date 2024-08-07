@@ -16,9 +16,15 @@ OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 def get_chromadb_data(client, collection_name):
     collection = client.get_collection(collection_name)
 <<<<<<< HEAD
+<<<<<<< HEAD
     #return collection.peek()
     all_docs = collection.get()  # 모든 데이터 들어갔는지 확인
     return all_docs
+=======
+    # all_cotents = collection.peek()
+    all_cotents = collection.get()
+    return all_cotents
+>>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
 =======
     # all_cotents = collection.peek()
     all_cotents = collection.get()
@@ -112,6 +118,9 @@ def chroma_search(client, collection_name, query, metadata_field=None, k=5):
 =======
     # docs = search_db.similarity_search(query, k=k)
     docs = search_db.similarity_search_with_score(query, k=5)
+<<<<<<< HEAD
+>>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
+=======
 >>>>>>> d5ea88dbc5f9c4cacc20bd60283f5a602e2a5493
     return docs
 
