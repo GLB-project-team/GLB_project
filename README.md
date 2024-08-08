@@ -1,5 +1,5 @@
 # GLB_project
-### 팀 프로젝트 명 : 무엇이든 물어책보살
+### 팀 프로젝트 명 : 책 IT OUT
 ### 팀 소개
 NIPA-Google ML 부트캠프 협력 실무 프로젝트를 통해 뭉친 팀 5조입니다.
 
@@ -29,10 +29,9 @@ NIPA-Google ML 부트캠프 협력 실무 프로젝트를 통해 뭉친 팀 5조
 
 ## 동작 화면
 
-![image](https://github.com/user-attachments/assets/986b1b39-db80-4f1c-b8be-2bcbe701bbc3)
-![image](https://github.com/user-attachments/assets/459265d9-884f-490a-853d-32980bad15e0)
-![image](https://github.com/user-attachments/assets/8e576149-77bf-43b1-8fef-9746a9958f56)
-
+![image](https://github.com/user-attachments/assets/7822a49f-a257-4909-a4c0-7b0d127f5151)
+![image](https://github.com/user-attachments/assets/c16029b7-aaaf-4f7b-ade3-5bfb44a54e88)
+![image](https://github.com/user-attachments/assets/123461cb-a475-482a-8031-dd8bc2859e8c)
 
 
 ## 참가자 코멘트
