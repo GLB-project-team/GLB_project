@@ -10,9 +10,11 @@ NIPA-Google ML 부트캠프 협력 실무 프로젝트를 통해 뭉친 팀 5조
 
 ## 프로젝트 배경/목표
 
+![image](https://github.com/user-attachments/assets/793528b0-93dc-4147-b96b-d6df580466a7)
 
 ## 동작 방식(프로세스)
 
+![image](https://github.com/user-attachments/assets/694091c1-0b62-46df-9cf8-5c9949c5a9f7)
 
 ## 기술스택
 
